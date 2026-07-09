@@ -1,6 +1,9 @@
+# Disable debug packages
+%define debug_package %{nil}
+
 Name:           sirius-os-pia-installer
 Version:        1.0.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Automated PIA VPN provisioner for Sirius-OS
 License:        GPLv3
 URL:            https://github.com/jonathonp3/sirius-os-pia-installer/
@@ -12,7 +15,7 @@ Requires:       podman
 Requires:       curl
 Requires:       tar
 
-# PIA Binary dependencies (Ensures they are present on the host)
+# PIA Binary dependencies
 Requires:       libnsl 
 Requires:       libXaw 
 Requires:       libutempter
@@ -26,39 +29,38 @@ Requires:       wget2
 
 %description
 Background pipeline to build and deploy PIA VPN for Atomic desktops.
-Automates provisioning from user-level containers to root-level persistent storage.
 
 %prep
-# No prep needed for plain script packaging
+# In COPR SCM builds, we need to enter the cloned directory.
+# We use -c -T to prevent it from looking for a tarball.
+%setup -c -T
+cp -rv %{_builddir}/sirius-os-pia-installer/* .
 
 %build
-# No build needed for scripts
+# No build needed
 
 %install
-# 1. Create target directories in the build root
+# 1. Create target directories
 mkdir -p %{buildroot}%{_libexecdir}
 mkdir -p %{buildroot}%{_unitdir}
 
-# 2. Install the scripts
-# We use '.' (current directory) because SCM builds put files in the build root
+# 2. Install the scripts from the current directory
 install -p -m 755 piavpn-extract.sh %{buildroot}%{_libexecdir}/
 install -p -m 755 piavpn-deploy.sh %{buildroot}%{_libexecdir}/
 
-# 3. Install the systemd units
+# 3. Install the systemd units from the current directory
 install -p -m 644 piavpn-extract.service %{buildroot}%{_unitdir}/
 install -p -m 644 piavpn-deploy.service %{buildroot}%{_unitdir}/
 
 %files
-# The binaries/scripts
 %{_libexecdir}/piavpn-extract.sh
 %{_libexecdir}/piavpn-deploy.sh
-# The services
 %{_unitdir}/piavpn-extract.service
 %{_unitdir}/piavpn-deploy.service
 
 %changelog
+* Thu Jul 09 2026 Jonathon <jonathon@sirius-os> - 1.0.0-2
+- Fix: Corrected file paths for COPR SCM build environment
 * Thu Jul 09 2026 Jonathon <jonathon@sirius-os> - 1.0.0-1
-- Initial release of the Sirius-OS PIA VPN Provisioning pipeline
-- Implemented decoupled Producer-Consumer architecture
-- Added support for persistent /var/opt storage and UI integration
+- Initial release
 
