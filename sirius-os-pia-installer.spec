@@ -50,6 +50,8 @@ install -p -m 644 %{SOURCE4} %{buildroot}/usr/lib/systemd/system/piavpn-deploy.s
 /usr/lib/systemd/system/piavpn-deploy.service
 
 %changelog
+* Thu Jul 09 2026 Jonathon <jonathon@sirius-os> - 1.0.0-8
+- Fix: Use --strip-components=3 for accurate UI asset extraction
 * Thu Jul 09 2026 Jonathon <jonathon@sirius-os> - 1.0.0-7
 - Fix: Switched to explicit paths in %files to resolve macro expansion failure
 * Thu Jul 09 2026 Jonathon <jonathon@sirius-os> - 1.0.0-6
