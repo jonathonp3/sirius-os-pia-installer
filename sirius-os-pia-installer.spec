@@ -3,7 +3,7 @@
 
 Name:           sirius-os-pia-installer
 Version:        1.0.0
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Automated PIA VPN provisioner for Sirius-OS
 License:        GPLv3
 URL:            https://github.com/jonathonp3/sirius-os-pia-installer/
@@ -31,10 +31,9 @@ Requires:       wget2
 Background pipeline to build and deploy PIA VPN for Atomic desktops.
 
 %prep
-# In COPR SCM builds, we need to enter the cloned directory.
-# We use -c -T to prevent it from looking for a tarball.
+# In COPR SCM, files are already in the current directory. 
+# We just create the build structure.
 %setup -c -T
-cp -rv %{_builddir}/sirius-os-pia-installer/* .
 
 %build
 # No build needed
@@ -44,13 +43,14 @@ cp -rv %{_builddir}/sirius-os-pia-installer/* .
 mkdir -p %{buildroot}%{_libexecdir}
 mkdir -p %{buildroot}%{_unitdir}
 
-# 2. Install the scripts from the current directory
-install -p -m 755 piavpn-extract.sh %{buildroot}%{_libexecdir}/
-install -p -m 755 piavpn-deploy.sh %{buildroot}%{_libexecdir}/
+# 2. Install the scripts from the SCM checkout
+# In 'simple' method, files are in %{_builddir}/.. (one level up)
+install -p -m 755 %{_builddir}/../piavpn-extract.sh %{buildroot}%{_libexecdir}/
+install -p -m 755 %{_builddir}/../piavpn-deploy.sh %{buildroot}%{_libexecdir}/
 
-# 3. Install the systemd units from the current directory
-install -p -m 644 piavpn-extract.service %{buildroot}%{_unitdir}/
-install -p -m 644 piavpn-deploy.service %{buildroot}%{_unitdir}/
+# 3. Install the systemd units
+install -p -m 644 %{_builddir}/../piavpn-extract.service %{buildroot}%{_unitdir}/
+install -p -m 644 %{_builddir}/../piavpn-deploy.service %{buildroot}%{_unitdir}/
 
 %files
 %{_libexecdir}/piavpn-extract.sh
@@ -59,6 +59,8 @@ install -p -m 644 piavpn-deploy.service %{buildroot}%{_unitdir}/
 %{_unitdir}/piavpn-deploy.service
 
 %changelog
+* Thu Jul 09 2026 Jonathon <jonathon@sirius-os> - 1.0.0-3
+- Fix: Use relative builddir paths for SCM compatibility
 * Thu Jul 09 2026 Jonathon <jonathon@sirius-os> - 1.0.0-2
 - Fix: Corrected file paths for COPR SCM build environment
 * Thu Jul 09 2026 Jonathon <jonathon@sirius-os> - 1.0.0-1
