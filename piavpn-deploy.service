@@ -1,0 +1,18 @@
+[Unit]
+Description=Sirius-OS PIA VPN Deployment (Root)
+After=piavpn-extract.service
+Requires=piavpn-extract.service
+Before=piavpn.service
+Wants=piavpn.service
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/usr/bin/bash /usr/libexec/piavpn-deploy.sh
+ExecStartPost=/usr/bin/systemctl daemon-reload
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+
+

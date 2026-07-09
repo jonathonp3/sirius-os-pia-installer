@@ -1,0 +1,18 @@
+[Unit]
+Description=Sirius-OS PIA VPN Extraction (User 1000)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=1000
+Group=1000
+PAMName=login
+
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+Environment=PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin
+
+ExecStart=/usr/bin/bash /usr/libexec/piavpn-extract.sh
+RemainAfterExit=yes
+
+
