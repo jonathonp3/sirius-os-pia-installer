@@ -3,7 +3,7 @@
 
 Name:           sirius-os-pia-installer
 Version:        1.0.0
-Release:        9%{?dist}
+Release:        10%{?dist}
 Summary:        Automated PIA VPN provisioner for Sirius-OS
 License:        GPLv3
 URL:            https://github.com/jonathonp3/sirius-os-pia-installer/
@@ -50,6 +50,8 @@ install -p -m 644 %{SOURCE4} %{buildroot}/usr/lib/systemd/system/piavpn-deploy.s
 /usr/lib/systemd/system/piavpn-deploy.service
 
 %changelog
+* Thu Jul 09 2026 Jonathon <jonathon@sirius-os> - 1.0.0-9
+- Fix: Added group piahnsd
 * Thu Jul 09 2026 Jonathon <jonathon@sirius-os> - 1.0.0-9
 - Fix: Removed leading slashes from tar extraction paths to match archive structure
 - Fixed UI asset deployment for icons and desktop entries
