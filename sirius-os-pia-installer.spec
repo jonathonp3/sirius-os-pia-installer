@@ -3,19 +3,24 @@
 
 Name:           sirius-os-pia-installer
 Version:        1.0.0
-Release:        4%{?dist}
+Release:        5%{?dist}
 Summary:        Automated PIA VPN provisioner for Sirius-OS
 License:        GPLv3
 URL:            https://github.com/jonathonp3/sirius-os-pia-installer/
 BuildArch:      noarch
 
-# Core dependencies for the factory and deployment
+# --- SOURCES ---
+# We define each file so they are bundled into the SRPM
+Source1:        piavpn-extract.sh
+Source2:        piavpn-deploy.sh
+Source3:        piavpn-extract.service
+Source4:        piavpn-deploy.service
+
+# --- DEPENDENCIES ---
 Requires:       distrobox 
 Requires:       podman
 Requires:       curl
 Requires:       tar
-
-# PIA Binary dependencies
 Requires:       libnsl 
 Requires:       libXaw 
 Requires:       libutempter
@@ -31,7 +36,7 @@ Requires:       wget2
 Background pipeline to build and deploy PIA VPN for Atomic desktops.
 
 %prep
-# Create a dummy build directory to satisfy rpmbuild
+# Create the build directory
 %setup -c -T
 
 %build
@@ -42,12 +47,12 @@ Background pipeline to build and deploy PIA VPN for Atomic desktops.
 mkdir -p %{buildroot}%{_libexecdir}
 mkdir -p %{buildroot}%{_unitdir}
 
-# 2. Install files using the _sourcedir macro
-# In COPR SCM builds, %{_sourcedir} points to the root of your Git clone
-install -p -m 755 %{_sourcedir}/piavpn-extract.sh %{buildroot}%{_libexecdir}/
-install -p -m 755 %{_sourcedir}/piavpn-deploy.sh %{buildroot}%{_libexecdir}/
-install -p -m 644 %{_sourcedir}/piavpn-extract.service %{buildroot}%{_unitdir}/
-install -p -m 644 %{_sourcedir}/piavpn-deploy.service %{buildroot}%{_unitdir}/
+# 2. Install the files using the Source macros
+# This ensures we pull the files from the bundled 'SOURCES' directory
+install -p -m 755 %{SOURCE1} %{buildroot}%{_libexecdir}/piavpn-extract.sh
+install -p -m 755 %{SOURCE2} %{buildroot}%{_libexecdir}/piavpn-deploy.sh
+install -p -m 644 %{SOURCE3} %{buildroot}%{_unitdir}/piavpn-extract.service
+install -p -m 644 %{SOURCE4} %{buildroot}%{_unitdir}/piavpn-deploy.service
 
 %files
 %{_libexecdir}/piavpn-extract.sh
@@ -56,6 +61,8 @@ install -p -m 644 %{_sourcedir}/piavpn-deploy.service %{buildroot}%{_unitdir}/
 %{_unitdir}/piavpn-deploy.service
 
 %changelog
+* Thu Jul 09 2026 Jonathon <jonathon@sirius-os> - 1.0.0-5
+- Fix: Explicitly define files as Sources to ensure bundling in SRPM
 * Thu Jul 09 2026 Jonathon <jonathon@sirius-os> - 1.0.0-4
 - Fix: Use %{_sourcedir} for reliable file pathing in COPR SCM
 * Thu Jul 09 2026 Jonathon <jonathon@sirius-os> - 1.0.0-3
