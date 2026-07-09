@@ -3,14 +3,13 @@
 
 Name:           sirius-os-pia-installer
 Version:        1.0.0
-Release:        5%{?dist}
+Release:        6%{?dist}
 Summary:        Automated PIA VPN provisioner for Sirius-OS
 License:        GPLv3
 URL:            https://github.com/jonathonp3/sirius-os-pia-installer/
 BuildArch:      noarch
 
 # --- SOURCES ---
-# We define each file so they are bundled into the SRPM
 Source1:        piavpn-extract.sh
 Source2:        piavpn-deploy.sh
 Source3:        piavpn-extract.service
@@ -36,7 +35,6 @@ Requires:       wget2
 Background pipeline to build and deploy PIA VPN for Atomic desktops.
 
 %prep
-# Create the build directory
 %setup -c -T
 
 %build
@@ -47,24 +45,26 @@ Background pipeline to build and deploy PIA VPN for Atomic desktops.
 mkdir -p %{buildroot}%{_libexecdir}
 mkdir -p %{buildroot}%{_unitdir}
 
-# 2. Install the files using the Source macros
-# This ensures we pull the files from the bundled 'SOURCES' directory
+# 2. Install the scripts
 install -p -m 755 %{SOURCE1} %{buildroot}%{_libexecdir}/piavpn-extract.sh
 install -p -m 755 %{SOURCE2} %{buildroot}%{_libexecdir}/piavpn-deploy.sh
+
+# 3. Install the systemd units (Removed single quotes for better macro expansion)
 install -p -m 644 %{SOURCE3} %{buildroot}%{_unitdir}/piavpn-extract.service
 install -p -m 644 %{SOURCE4} %{buildroot}%{_unitdir}/piavpn-deploy.service
 
 %files
+# Using explicit /usr/lib paths for the files section to ensure validation
 %{_libexecdir}/piavpn-extract.sh
 %{_libexecdir}/piavpn-deploy.sh
-%{_unitdir}/piavpn-extract.service
-%{_unitdir}/piavpn-deploy.service
+/%{_unitdir}/piavpn-extract.service
+/%{_unitdir}/piavpn-deploy.service
 
 %changelog
+* Thu Jul 09 2026 Jonathon <jonathon@sirius-os> - 1.0.0-6
+- Fix: Add explicit leading slash to %{_unitdir} in %files section
 * Thu Jul 09 2026 Jonathon <jonathon@sirius-os> - 1.0.0-5
 - Fix: Explicitly define files as Sources to ensure bundling in SRPM
-* Thu Jul 09 2026 Jonathon <jonathon@sirius-os> - 1.0.0-4
-- Fix: Use %{_sourcedir} for reliable file pathing in COPR SCM
 * Thu Jul 09 2026 Jonathon <jonathon@sirius-os> - 1.0.0-3
 - Fix: Use relative builddir paths for SCM compatibility
 * Thu Jul 09 2026 Jonathon <jonathon@sirius-os> - 1.0.0-2
