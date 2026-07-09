@@ -1,7 +1,5 @@
-# sirius-os-pia-manager
+# Sirius-OS PIA Installer
 Automated, container-based provisioning pipeline for Private Internet Access (PIA) on Fedora Atomic and Workstation, using a decoupled model for seamless persistent VPN management.
-
-# Sirius-OS PIA VPN Manager
 
 This repository contains RPM source and automation scripts to install the PIA VPN client on **Sirius-OS** and **Wolf-OS**.
 
