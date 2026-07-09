@@ -50,12 +50,12 @@ distrobox enter "$CONTAINER_NAME" -- bash -c "
    /tmp/pia.run --quiet || true
    
    # Create the archive inside the container
-   sudo tar -czf /tmp/pia-stage.tar.gz \
-     /opt/piavpn \
-     /etc/systemd/system/piavpn.service \
-     /etc/NetworkManager/conf.d/wgpia.conf \
-     /usr/share/applications/piavpn.desktop \
-     /usr/share/pixmaps/piavpn.png || true
+    sudo tar -czf /tmp/pia-stage.tar.gz -C / \
+    opt/piavpn \
+    etc/systemd/system/piavpn.service \
+    etc/NetworkManager/conf.d/wgpia.conf \
+    usr/share/applications/piavpn.desktop \
+    usr/share/pixmaps/piavpn.png || true
 "
 
 # 4. Pull the archive to the host /tmp folder
