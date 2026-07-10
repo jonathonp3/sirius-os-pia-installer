@@ -79,7 +79,7 @@ echo "🔧 Configuring system integration..."
 ln -sf /var/opt/piavpn/bin/piactl /usr/local/bin/piactl
 ln -sf /var/opt/piavpn/bin/pia-daemon /usr/local/bin/pia-daemon
 ln -sf /var/opt/piavpn/bin/pia-client /usr/local/bin/pia-client
-ln -sf /var/opt/piavpn/bin/pia-unbound /usr/local/pia-unbound
+ln -sf /var/opt/piavpn/bin/pia-unbound /usr/local/bin/pia-unbound
 
 # Fix paths in the service file (Systemd needs physical path)
 if [[ -f /etc/systemd/system/piavpn.service ]]; then
