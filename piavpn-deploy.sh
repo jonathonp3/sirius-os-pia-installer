@@ -91,8 +91,8 @@ update-desktop-database /usr/local/share/applications || true
 
 # Set Ownership & Permissions (Locked GIDs)
 chown -R root:root "$PIA_VAR_DIR"
-groupadd -r piavpn || true
-groupadd -r piahnsd || true
+# groupadd -r piavpn || true
+# groupadd -r piahnsd || true
 chgrp -R "$GID_PIAVPN" "$PIA_VAR_DIR/etc" 2>/dev/null || :
 chmod 750 "$PIA_VAR_DIR/etc"
 find "$PIA_VAR_DIR/etc" -name "*.json" -exec chmod 640 {} + 2>/dev/null || :

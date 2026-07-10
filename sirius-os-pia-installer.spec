@@ -2,8 +2,8 @@
 %define debug_package %{nil}
 
 Name:           sirius-os-pia-installer
-Version:        1.0.0
-Release:        10%{?dist}
+Version:        1.1.0
+Release:        1%{?dist}
 Summary:        Automated PIA VPN provisioner for Sirius-OS
 License:        GPLv3
 URL:            https://github.com/jonathonp3/sirius-os-pia-installer/
@@ -14,6 +14,7 @@ Source1:        piavpn-extract.sh
 Source2:        piavpn-deploy.sh
 Source3:        piavpn-extract.service
 Source4:        piavpn-deploy.service
+Source5:        sirius-os-pia.sysusers
 
 # --- DEPENDENCIES ---
 Requires:       distrobox, podman, curl, tar
@@ -22,6 +23,7 @@ Requires:       mkfontscale, nss-tools, xterm, xorg-x11-fonts-misc, wget2
 
 %description
 Background pipeline to build and deploy PIA VPN for Atomic desktops.
+Includes sysusers.d integration to ensure system groups exist when layered via rpm-ostree.
 
 %prep
 %setup -c -T
@@ -33,6 +35,8 @@ Background pipeline to build and deploy PIA VPN for Atomic desktops.
 # 1. Create target directories using explicit paths
 mkdir -p %{buildroot}/usr/libexec
 mkdir -p %{buildroot}/usr/lib/systemd/system
+# ADDED: Directory for declarative group creation
+mkdir -p %{buildroot}/usr/lib/sysusers.d
 
 # 2. Install the scripts
 install -p -m 755 %{SOURCE1} %{buildroot}/usr/libexec/piavpn-extract.sh
@@ -42,15 +46,24 @@ install -p -m 755 %{SOURCE2} %{buildroot}/usr/libexec/piavpn-deploy.sh
 install -p -m 644 %{SOURCE3} %{buildroot}/usr/lib/systemd/system/piavpn-extract.service
 install -p -m 644 %{SOURCE4} %{buildroot}/usr/lib/systemd/system/piavpn-deploy.service
 
+# 4. ADDED: Install the sysusers configuration
+# This ensures groups are created during layering
+install -p -m 644 %{SOURCE5} %{buildroot}/usr/lib/sysusers.d/sirius-os-pia.conf
+
 %files
-# Use explicit paths to avoid macro expansion issues
 /usr/libexec/piavpn-extract.sh
 /usr/libexec/piavpn-deploy.sh
 /usr/lib/systemd/system/piavpn-extract.service
 /usr/lib/systemd/system/piavpn-deploy.service
+# ADDED: Include the sysusers file in the manifest
+/usr/lib/sysusers.d/sirius-os-pia.conf
 
 %changelog
-
+* Fri Jul 10 2026 Jonathon <jonathon@sirius-os> - 1.1.0-1
+- feat: implemented sysusers.d for native group creation during layering
+- bump version to 1.1.0
+* Fri Jul 10 2026 Jonathon <jonathon@sirius-os> - 1.0.0-10
+- Fix: Added pia-ubound resolver to path, added group piahnsd
 * Fri Jul 10 2026 Jonathon <jonathon@sirius-os> - 1.0.0-10
 - Fix: Added pia-ubound resolver to path, added group piahnsd
 * Thu Jul 09 2026 Jonathon <jonathon@sirius-os> - 1.0.0-9
@@ -70,3 +83,4 @@ install -p -m 644 %{SOURCE4} %{buildroot}/usr/lib/systemd/system/piavpn-deploy.s
 - Fix: Corrected file paths for COPR SCM build environment
 * Thu Jul 09 2026 Jonathon <jonathon@sirius-os> - 1.0.0-1
 - Initial release
+
