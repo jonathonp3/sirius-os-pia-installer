@@ -50,8 +50,9 @@ install -p -m 644 %{SOURCE4} %{buildroot}/usr/lib/systemd/system/piavpn-deploy.s
 /usr/lib/systemd/system/piavpn-deploy.service
 
 %changelog
-* Thu Jul 09 2026 Jonathon <jonathon@sirius-os> - 1.0.0-9
-- Fix: Added group piahnsd
+
+* Fri Jul 10 2026 Jonathon <jonathon@sirius-os> - 1.0.1-10
+- Fix: Added pia-ubound resolver to path, added group piahnsd
 * Thu Jul 09 2026 Jonathon <jonathon@sirius-os> - 1.0.0-9
 - Fix: Removed leading slashes from tar extraction paths to match archive structure
 - Fixed UI asset deployment for icons and desktop entries
