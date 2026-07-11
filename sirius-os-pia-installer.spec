@@ -3,7 +3,7 @@
 
 Name:           sirius-os-pia-installer
 Version:        1.1.1
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Automated PIA VPN provisioner for Sirius-OS
 License:        GPLv3
 URL:            https://github.com/jonathonp3/sirius-os-pia-installer/
@@ -55,41 +55,30 @@ install -p -m 644 %{SOURCE5} %{buildroot}/usr/lib/sysusers.d/sirius-os-pia.conf
 install -p -m 644 %{SOURCE6} %{buildroot}/usr/lib/systemd/system-preset/50-wolf-os-vpn.preset
 
 %preun
-# $1 == 0 means uninstallation. We perform a surgical wipe of the VPN.
 if [ $1 -eq 0 ]; then
-    echo "🗑️ Sirius-OS: Completely removing PIA VPN binaries and configs..."
+    echo "📝 Sirius-OS: Scheduling persistent data cleanup..."
+    mkdir -p /etc/tmpfiles.d/
+    cat <<EOF > /etc/tmpfiles.d/piavpn-cleanup.conf
+# Sirius-OS VPN Cleanup
+# This file will delete itself after running once.
 
-    # Stop and disable the VPN service
-    systemctl disable --now piavpn.service 2>/dev/null || :
-    
-    # Unmount locked cgroup interfaces (Atomic Bridge safety)
-    umount -l /opt/piavpn/etc/cgroup/net_cls 2>/dev/null || :
-    
-    # Remove system configurations
-    rm -f /etc/systemd/system/piavpn.service
-    rm -f /etc/NetworkManager/conf.d/wgpia.conf
-    
-    # Remove UI assets and refresh menu
-    rm -f /usr/local/share/applications/piavpn.desktop
-    rm -f /usr/local/share/pixmaps/piavpn.png
-    if [ -x /usr/bin/update-desktop-database ]; then
-        update-desktop-database /usr/local/share/applications 2>/dev/null || :
-    fi
-    
-    # Remove host binary links
-    rm -f /usr/local/bin/piactl
-    rm -f /usr/local/bin/pia-daemon
-    rm -f /usr/local/bin/pia-client
-    rm -f /usr/local/bin/pia-unbound
-    
-    # Remove the legacy bridge link
-    rm -f /opt/piavpn
-    
-    # Remove the persistent storage (Binaries and Credentials)
-    rm -rf /var/opt/piavpn
-    
-    systemctl daemon-reload
-    echo "✨ PIA VPN has been completely wiped from the system."
+# 1. Recursive removal of the binaries and credentials
+R! /var/opt/piavpn                                -    -    -    -    -
+
+# 2. Individual file removals
+r! /etc/systemd/system/piavpn.service             -    -    -    -    -
+r! /etc/NetworkManager/conf.d/wgpia.conf          -    -    -    -    -
+r! /usr/local/share/applications/piavpn.desktop   -    -    -    -    -
+r! /usr/local/share/pixmaps/piavpn.png            -    -    -    -    -
+r! /usr/local/bin/piactl                          -    -    -    -    -
+r! /usr/local/bin/pia-daemon                      -    -    -    -    -
+r! /usr/local/bin/pia-client                      -    -    -    -    -
+r! /usr/local/bin/pia-unbound                     -    -    -    -    -
+r! /opt/piavpn                                    -    -    -    -    -
+
+# 3. SELF-DESTRUCT: Remove this very file at the end of the process
+r /etc/tmpfiles.d/piavpn-cleanup.conf             -    -    -    -    -
+EOF
 fi
 
 %files
@@ -101,6 +90,11 @@ fi
 /usr/lib/systemd/system-preset/50-wolf-os-vpn.preset
 
 %changelog
+* Sat Jul 11 2026 Jonathon <jonathon@sirius-os> - 1.1.1-2
+- feat: implemented self-destructing tmpfiles.d cleanup in %%preun
+- Solves "ghost binaries" issue where persistent data remained after Atomic uninstall
+- Adds one-time boot logic to wipe /var/opt/piavpn and system-wide symlinks
+- Ensures complete system removal of pia after uninstall
 * Sat Jul 11 2026 Jonathon <jonathon@sirius-os> - 1.1.1-1
 - feat: Added %%preun cleanup logic for total VPN removal
 - feat: Added systemd preset for automatic enablement
