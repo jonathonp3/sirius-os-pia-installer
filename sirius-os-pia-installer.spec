@@ -2,8 +2,8 @@
 %define debug_package %{nil}
 
 Name:           sirius-os-pia-installer
-Version:        1.1.1
-Release:        2%{?dist}
+Version:        1.2.0
+Release:        1%{?dist}
 Summary:        Automated PIA VPN provisioner for Sirius-OS
 License:        GPLv3
 URL:            https://github.com/jonathonp3/sirius-os-pia-installer/
@@ -12,84 +12,68 @@ BuildArch:      noarch
 # --- SOURCES ---
 Source1:        piavpn-extract.sh
 Source2:        piavpn-deploy.sh
-Source3:        piavpn-extract.service
-Source4:        piavpn-deploy.service
-Source5:        sirius-os-pia.sysusers
-Source6:        wolf-os-vpn.preset
+Source3:        pia_service_removal.sh
+Source4:        piavpn-extract.service
+Source5:        piavpn-deploy.service
+Source6:        sirius-os-pia.sysusers
+Source7:        wolf-os-vpn.preset
 
 # --- DEPENDENCIES ---
 Requires:       distrobox, podman, curl, tar
-Requires:       libnsl, libXaw, libutempter, libxcrypt-compat, libxkbcommon-x11
-Requires:       mkfontscale, nss-tools, xterm, xorg-x11-fonts-misc, wget2
+Requires:       libnsl, libXaw, libutempter, libxcrypt-compat, libxkbcommon-x11, nss-tools, xterm, wget2
 
 %description
-Background pipeline to build and deploy PIA VPN for Atomic desktops.
-Includes sysusers.d for group management, systemd presets for 
-automatic enablement, and full cleanup logic upon uninstallation.
+Advanced background pipeline to build and deploy PIA VPN for Atomic desktops.
+Uses a 3-script model to handle automated extraction, deployment, and 
+persistent cleanup logic.
 
 %prep
 %setup -c -T
 
-%build
-# No build needed
-
 %install
-# 1. Create target directories
 mkdir -p %{buildroot}/usr/libexec
 mkdir -p %{buildroot}/usr/lib/systemd/system
 mkdir -p %{buildroot}/usr/lib/sysusers.d
 mkdir -p %{buildroot}/usr/lib/systemd/system-preset
 
-# 2. Install scripts
+# Install the 3 scripts
 install -p -m 755 %{SOURCE1} %{buildroot}/usr/libexec/piavpn-extract.sh
 install -p -m 755 %{SOURCE2} %{buildroot}/usr/libexec/piavpn-deploy.sh
+install -p -m 755 %{SOURCE3} %{buildroot}/usr/libexec/pia_service_removal.sh
 
-# 3. Install systemd units
-install -p -m 644 %{SOURCE3} %{buildroot}/usr/lib/systemd/system/piavpn-extract.service
-install -p -m 644 %{SOURCE4} %{buildroot}/usr/lib/systemd/system/piavpn-deploy.service
+# Install the 2 services
+install -p -m 644 %{SOURCE4} %{buildroot}/usr/lib/systemd/system/piavpn-extract.service
+install -p -m 644 %{SOURCE5} %{buildroot}/usr/lib/systemd/system/piavpn-deploy.service
 
-# 4. Install sysusers configuration
-install -p -m 644 %{SOURCE5} %{buildroot}/usr/lib/sysusers.d/sirius-os-pia.conf
+# Install infrastructure
+install -p -m 644 %{SOURCE6} %{buildroot}/usr/lib/sysusers.d/sirius-os-pia.conf
+install -p -m 644 %{SOURCE7} %{buildroot}/usr/lib/systemd/system-preset/50-wolf-os-vpn.preset
 
-# 5. Install systemd preset
-install -p -m 644 %{SOURCE6} %{buildroot}/usr/lib/systemd/system-preset/50-wolf-os-vpn.preset
+%post
+# Initialize the dormant Janitor logic during installation
+/usr/libexec/pia_service_removal.sh
 
 %preun
+# The Marker: Signal the Janitor to wake up on the next boot
 if [ $1 -eq 0 ]; then
-    echo "📝 Sirius-OS: Scheduling persistent data cleanup..."
-    mkdir -p /etc/tmpfiles.d/
-    cat <<EOF > /etc/tmpfiles.d/piavpn-cleanup.conf
-# Sirius-OS VPN Cleanup
-# This file will delete itself after running once.
-
-# 1. Recursive removal of the binaries and credentials
-R! /var/opt/piavpn                                -    -    -    -    -
-
-# 2. Individual file removals
-r! /etc/systemd/system/piavpn.service             -    -    -    -    -
-r! /etc/NetworkManager/conf.d/wgpia.conf          -    -    -    -    -
-r! /usr/local/share/applications/piavpn.desktop   -    -    -    -    -
-r! /usr/local/share/pixmaps/piavpn.png            -    -    -    -    -
-r! /usr/local/bin/piactl                          -    -    -    -    -
-r! /usr/local/bin/pia-daemon                      -    -    -    -    -
-r! /usr/local/bin/pia-client                      -    -    -    -    -
-r! /usr/local/bin/pia-unbound                     -    -    -    -    -
-r! /opt/piavpn                                    -    -    -    -    -
-
-# 3. SELF-DESTRUCT: Remove this very file at the end of the process
-r /etc/tmpfiles.d/piavpn-cleanup.conf             -    -    -    -    -
-EOF
+    echo "🚨 Sirius-OS: Uninstalling manager. Cleanup scheduled for next boot."
+    mkdir -p /etc/piavpn-cleanup
+    echo "cleanup" > /etc/piavpn-cleanup/cleanup-needed
 fi
 
 %files
 /usr/libexec/piavpn-extract.sh
 /usr/libexec/piavpn-deploy.sh
+/usr/libexec/pia_service_removal.sh
 /usr/lib/systemd/system/piavpn-extract.service
 /usr/lib/systemd/system/piavpn-deploy.service
 /usr/lib/sysusers.d/sirius-os-pia.conf
 /usr/lib/systemd/system-preset/50-wolf-os-vpn.preset
 
 %changelog
+* Sat Jul 11 2026 Jonathon <jonathon@sirius-os> - 1.2.0-1
+- feat: Implemented 3-script architecture with 'pia_service_removal.sh'
+- feat: Added dormant clean up logic for complete system cleanup after uninstall
 * Sat Jul 11 2026 Jonathon <jonathon@sirius-os> - 1.1.1-2
 - feat: implemented self-destructing tmpfiles.d cleanup in %%preun
 - Solves "ghost binaries" issue where persistent data remained after Atomic uninstall
