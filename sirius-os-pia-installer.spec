@@ -3,7 +3,7 @@
 
 Name:           sirius-os-pia-installer
 Version:        1.2.0
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        Automated PIA VPN provisioner for Sirius-OS
 License:        GPLv3
 URL:            https://github.com/jonathonp3/sirius-os-pia-installer/
@@ -30,6 +30,7 @@ Requires:       libxcrypt-compat
 Requires:       libxkbcommon-x11
 Requires:       mkfontscale
 Requires:       nss-tools
+Requires:       systemd
 Requires:       xterm
 Requires:       xorg-x11-fonts-misc
 Requires:       wget2
@@ -63,6 +64,9 @@ install -p -m 644 %{SOURCE7} %{buildroot}/usr/lib/systemd/system-preset/50-wolf-
 %post
 /usr/libexec/pia-uninstall-provision.sh >/dev/null 2>&1 || :
 
+%systemd_post piavpn-deploy.service
+
+
 %postun
 if [ $1 -eq 0 ]; then
     echo "🚨 Sirius-OS: Uninstalling. Scheduling uninstall marker for next boot."
@@ -83,6 +87,9 @@ fi
 /usr/lib/systemd/system-preset/50-wolf-os-vpn.preset
 
 %changelog
+* Sun Jul 12 2026 jonathon <jonathon@sitius- 1.2.0-4
+- Fix: systemd: apply presets at RPM install time
+
 * Sun Jul 12 2026 jonathon <jonathon@sitius- 1.2.0-3
 - Fixed dependency format
 

@@ -2,6 +2,10 @@
 # Sirius-OS: PIA Removal
 set -euo pipefail
 
+LOG=/var/log/piavpn-uninstall-debug.log
+echo "=== piavpn-uninstall $(date -Is) PID=$$ USER=$(id -u -n) ===" >> "$LOG"
+
+exec >>"$LOG" 2>&1
 CLEANUP_DIR="/etc/piavpn-uninstall"
 UNINSTALL_DIR="$CLEANUP_DIR"
 SERVICE_FILE="/etc/systemd/system/piavpn-uninstall.service"
@@ -29,13 +33,48 @@ umount -l /opt/piavpn/etc/cgroup/net_cls 2>/dev/null || :
 
 # 3. Nuke binaries, storage, and configs
 echo "🗑️  Removing persistent files..."
-rm -rf /var/opt/piavpn
-rm -f /etc/systemd/system/piavpn.service
-rm -f /etc/NetworkManager/conf.d/wgpia.conf
-rm -f /usr/local/share/applications/piavpn.desktop
-rm -f /usr/local/share/pixmaps/piavpn.png
-rm -f /usr/local/bin/piactl /usr/local/bin/pia-daemon /usr/local/bin/pia-client /usr/local/bin/pia-unbound
-rm -rf /opt/piavpn
+debug_step() {
+  echo "[$(date -Is)] $1"
+}
+
+rm_or_log() {
+  path="$1"
+  if [ -e "$path" ] || [ -L "$path" ]; then
+    debug_step "Removing: $path"
+    rm -f "$path"
+    echo "Removed rc=$?"
+  else
+    debug_step "Skip (not found): $path"
+  fi
+}
+
+rmrf_or_log() {
+  path="$1"
+  if [ -e "$path" ] || [ -L "$path" ]; then
+    debug_step "Removing recursively: $path"
+    rm -rf "$path"
+    echo "Removed rc=$?"
+  else
+    debug_step "Skip (not found): $path"
+  fi
+}
+
+debug_step "🗑️ Removing persistent files..."
+
+rmrf_or_log /var/opt/piavpn
+
+rm_or_log /etc/systemd/system/piavpn.service
+rm_or_log /etc/NetworkManager/conf.d/wgpia.conf
+
+rm_or_log /usr/local/share/applications/piavpn.desktop
+rm_or_log /usr/local/share/pixmaps/piavpn.png
+
+rm_or_log /usr/local/bin/piactl
+rm_or_log /usr/local/bin/pia-daemon
+rm_or_log /usr/local/bin/pia-client
+rm_or_log /usr/local/bin/pia-unbound
+
+rmrf_or_log /opt/piavpn
 
 # 4. Remove the trigger marker
 rm -f /etc/piavpn-uninstall/uninstall-needed
@@ -43,7 +82,7 @@ rm -f /etc/piavpn-uninstall/uninstall-needed
 # 5. SELF-DESTRUCT: Remove systemd artifacts
 echo "📂 Removing uninstall.service..."
 rm -f /etc/systemd/system/multi-user.target.wants/piavpn-uninstall.service
-rm -f /etc/systemd/system/piavpn-uninstall.service
+# rm -f /etc/systemd/system/piavpn-uninstall.service
 rm -f /etc/piavpn-uninstall/pia-uninstaller.sh
 rmdir /etc/piavpn-uninstall 2>/dev/null || :
 
