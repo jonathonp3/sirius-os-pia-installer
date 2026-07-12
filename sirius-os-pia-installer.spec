@@ -18,13 +18,25 @@ Source5:        piavpn-deploy.service
 Source6:        sirius-os-pia.sysusers
 Source7:        wolf-os-vpn.preset
 
+# --- DEPENDENCIES ---
+Requires:       distrobox
+Requires:       podman
+Requires:       curl
+Requires:       tar
+Requires:       libnsl
+Requires:       libXaw
+Requires:       libutempter
+Requires:       libxcrypt-compat
+Requires:       libxkbcommon-x11
+Requires:       mkfontscale
+Requires:       nss-tools
+Requires:       xterm
+Requires:       xorg-x11-fonts-misc
+Requires:       wget2
+
 %description
 Advanced background pipeline to build and deploy PIA VPN for Atomic desktops.
 Includes an automated isolated factory and one-time uninstall cleanup logic.
-
-Requires:       distrobox, podman, curl, tar
-Requires:       libnsl, libXaw, libutempter, libxcrypt-compat, libxkbcommon-x11
-Requires:       mkfontscale, nss-tools, xterm, xorg-x11-fonts-misc, wget2
 
 %prep
 %setup -c -T
