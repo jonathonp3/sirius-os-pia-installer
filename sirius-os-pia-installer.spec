@@ -3,7 +3,7 @@
 
 Name:           sirius-os-pia-installer
 Version:        1.2.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Automated PIA VPN provisioner for Sirius-OS
 License:        GPLv3
 URL:            https://github.com/jonathonp3/sirius-os-pia-installer/
@@ -21,6 +21,10 @@ Source7:        wolf-os-vpn.preset
 %description
 Advanced background pipeline to build and deploy PIA VPN for Atomic desktops.
 Includes an automated isolated factory and one-time uninstall cleanup logic.
+
+Requires:       distrobox, podman, curl, tar
+Requires:       libnsl, libXaw, libutempter, libxcrypt-compat, libxkbcommon-x11
+Requires:       mkfontscale, nss-tools, xterm, xorg-x11-fonts-misc, wget2
 
 %prep
 %setup -c -T
@@ -67,6 +71,9 @@ fi
 /usr/lib/systemd/system-preset/50-wolf-os-vpn.preset
 
 %changelog
+* Sun Jul 12 2026 jonathon <jonathon@sitius- 1.2.0-2
+- Fix added back missing despondencies 
+
 * Sun Jul 12 2026 jonathon <jonathon@sitius- 1.2.0-1
 - Fix uninstall flow on rpm-ostree by provisioning a dormant systemd service gated by /etc/piavpn-uninstall/uninstall-needed marker created in %postun.
 
