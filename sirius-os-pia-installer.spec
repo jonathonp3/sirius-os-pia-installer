@@ -3,7 +3,7 @@
 
 Name:           sirius-os-pia-installer
 Version:        1.2.0
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Automated PIA VPN provisioner for Sirius-OS
 License:        GPLv3
 URL:            https://github.com/jonathonp3/sirius-os-pia-installer/
@@ -83,8 +83,8 @@ fi
 /usr/lib/systemd/system-preset/50-wolf-os-vpn.preset
 
 %changelog
-* Sun Jul 12 2026 jonathon <jonathon@sitius- 1.2.0-2
-- Fix added back missing despondencies 
+* Sun Jul 12 2026 jonathon <jonathon@sitius- 1.2.0-3
+- Fixed dependency format
 
 * Sun Jul 12 2026 jonathon <jonathon@sitius- 1.2.0-1
 - Fix uninstall flow on rpm-ostree by provisioning a dormant systemd service gated by /etc/piavpn-uninstall/uninstall-needed marker created in %postun.
