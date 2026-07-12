@@ -38,14 +38,14 @@ rm -f /usr/local/bin/piactl /usr/local/bin/pia-daemon /usr/local/bin/pia-client 
 rm -rf /opt/piavpn
 
 # 4. Remove the trigger marker
-rm -f /etc/piavpn-uninstall/uninstall-needed
+# rm -f /etc/piavpn-uninstall/uninstall-needed
 
 # 5. SELF-DESTRUCT: Remove systemd artifacts
-echo "📂 Removing uninstall.service..."
-rm -f /etc/systemd/system/multi-user.target.wants/piavpn-uninstall.service
+# echo "📂 Removing uninstall.service..."
+# rm -f /etc/systemd/system/multi-user.target.wants/piavpn-uninstall.service
 # rm -f /etc/systemd/system/piavpn-uninstall.service
 # rm -f /etc/piavpn-uninstall/pia-uninstaller.sh
-rmdir /etc/piavpn-uninstall 2>/dev/null || :
+# rmdir /etc/piavpn-uninstall 2>/dev/null || :
 
 systemctl daemon-reload
 echo "✨ VPN has been removed."
