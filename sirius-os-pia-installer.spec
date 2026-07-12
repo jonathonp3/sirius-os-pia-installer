@@ -3,7 +3,7 @@
 
 Name:           sirius-os-pia-installer
 Version:        1.2.0
-Release:        7%{?dist}
+Release:        8%{?dist}
 Summary:        Automated PIA VPN provisioner for Sirius-OS
 License:        GPLv3
 URL:            https://github.com/jonathonp3/sirius-os-pia-installer/
@@ -87,6 +87,8 @@ fi
 
 
 %changelog
+* Sun Jul 12 2026 jonathon <jonathon@sirius-os> - 1.2.0-8
+
 * Sun Jul 12 2026 jonathon <jonathon@sirius-os> - 1.2.0-7
 - Fix: Resolve bwrap(sh) exit code 1 error during rpm-ostree install
 - Fix: Remove broken %%systemd_post macros that fail in Atomic sandboxes
