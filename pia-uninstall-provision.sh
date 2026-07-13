@@ -4,7 +4,6 @@ set -euo pipefail
 
 SERVICE_FILE="/etc/systemd/system/piavpn-uninstall.service"
 TASK_FILE="/etc/piavpn-uninstall/pia-uninstaller.sh"
-NEEDED_MARKER="/etc/piavpn-uninstall/uninstall-needed"
 
 if [ -e "$SERVICE_FILE" ] || [ -e "$TASK_FILE" ]; then
   echo "ℹ️  Uninstall provision already exists; skipping."
@@ -55,7 +54,8 @@ chmod +x "$TASK_FILE"
 cat <<EOF > "$SERVICE_FILE"
 [Unit]
 Description=Sirius-OS PIA VPN Uninstall
-ConditionPathExists=$NEEDED_MARKER
+# Only start this unit if the given path exists
+ConditionPathExists=!/usr/libexec/piavpn-deploy.sh
 DefaultDependencies=no
 After=local-fs.target
 Before=multi-user.target

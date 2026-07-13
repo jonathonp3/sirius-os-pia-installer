@@ -3,7 +3,7 @@
 
 Name:           sirius-os-pia-installer
 Version:        1.2.0
-Release:        10%{?dist}
+Release:        11%{?dist}
 Summary:        Automated PIA VPN provisioner for Sirius-OS
 License:        GPLv3
 URL:            https://github.com/jonathonp3/sirius-os-pia-installer/
@@ -72,16 +72,7 @@ ln -sf ../pia-uninstall-provision.service %{buildroot}/usr/lib/systemd/system/mu
 # No-op: Provisioning handled by systemd service on boot
 
 %postun
-if [ $1 -eq 0 ]; then
-    echo "🚨 Sirius-OS: Uninstalling. Scheduling cleanup marker for next boot."
-    # Create the marker. /etc/piavpn-uninstall is NOT owned by RPM, 
-    # so this directory and file will persist after the RPM files are gone.
-    mkdir -p /etc/piavpn-uninstall
-    echo "true" > /etc/piavpn-uninstall/uninstall-needed
-    
-    # Attempt to reload if possible (ignored if in sandbox)
-    systemctl daemon-reload >/dev/null 2>&1 || :
-fi
+
 
 %files
 /usr/libexec/piavpn-extract.sh
@@ -98,6 +89,12 @@ fi
 /usr/lib/sysusers.d/sirius-os-pia.conf
 
 %changelog
+%changelog
+* Mon Jul 13 2026 jonathon <jonathon@sirius-os> - 1.2.0-11
+- Fix: Trigger uninstall cleanup via systemd ConditionPathExists gate
+- Fix: Ensure uninstall provision artifacts are created at runtime under /etc (deployment-persistent)
+- Improvement: Use oneshot uninstall unit to remove PIA files and stop related services
+
 * Mon Jul 13 2026 jonathon <jonathon@sirius-os> - 1.2.0-10
 - Fix: Moved uninstall provisioning to a systemd service to bypass rpm-ostree sandbox
 - Fix: Ensure uninstaller artifacts in /etc are created at runtime for persistence
