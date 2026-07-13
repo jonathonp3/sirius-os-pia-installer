@@ -5,7 +5,6 @@ This repository contains RPM source and automation scripts to install the PIA VP
 
 On Silverblue, Bazzite, and Aurora (atomic, immutable/read-only filesystems), the installer downloads the PIA Linux app using a decoupled two-stage systemd architecture.
 
-
 ## 🏗️ The Architecture
 
 The manager implements a 2 stage model to bridge the gap between user-level container engine and root-level system deployment:
@@ -20,17 +19,18 @@ The manager implements a 2 stage model to bridge the gap between user-level cont
    - Runs as **Root**.
    - Monitors the staging archive.
    - Deploys binaries to persistent storage (`/var/opt/piavpn`).
-   - Applies the Atomic Bridge logic for UI compatibility.
-   - Preserves credentials in `/var/opt/piavpn/etc`.
+   - Ensures the application runs properly on immutable OSTree systems.
+   - Preserves credentials across updates. `/var/opt/piavpn/etc`.
    - Restarts the systemd VPN daemon.
    - Checks for updates at boot and skips installation when nothing new is available.
-   
+ 
+
+The installer includes cleanup logic designed to work cleanly on OSTree/atomic systems. It bypasses rpm-ostree sandbox limitations by deferring cleanup to the next boot phase via a systemd oneshot workflow. This enables zero-touch deletion: after you remove the RPM and reboot, the uninstall runs automatically without manual steps.
 
 ## 🚀 Key Features
 
 - **Atomic-Native**: Built for OSTree-based systems.
 - **Idempotent**: Quick version checks with no boot-time impact when already up to date.
-- **Self-Healing**: Repairs broken symlinks or missing binaries on reboot.
 - **Credential-Safe**: Updates binaries without altering your login session or settings.
 - **Universal**: Detects and adapts to both Atomic and Workstation environments.
 
@@ -38,10 +38,39 @@ The manager implements a 2 stage model to bridge the gap between user-level cont
 
 This project is built and hosted via [Fedora COPR](https://copr.fedorainfracloud.org/coprs/jonathonp3/sirius-os/). 
 
-To build manually:
-1. Install rpkg.
-2. Run rpkg srpm to generate the source package.
-3. Build and deploy the resulting RPM to your image build or local machine.
-
 ## 📜 License
 This automation logic is licensed under GPL-3.0. The provisioned software (PIA) is subject to its own proprietary license and terms.
+
+## How to install Sirius-OS PIA Installer
+
+1. Install Repository:
+```bash
+sudo curl -Lo /etc/yum.repos.d/_copr_jonathonp3-sirius-os.repo https://copr.fedorainfracloud.org/coprs/jonathonp3/sirius-os/repo/fedora-44/jonathonp3-sirius-os-fedora-44.repo
+```
+
+2. Install Sirius-OS PIA Installer
+```bash
+rpm-ostree install sirius-os-pia-installer
+```
+
+3. Reboot
+```bash
+reboot
+```
+
+4. Login to the admin account system (default group is 1000 on fedora) and wait for the installation to complete. It takes a few minutes for the installation to complete. 
+
+
+### How to remove PIA
+
+1. 
+```bash
+rpm-ostree install sirius-os-pia-installer
+```
+
+2. Reboot into the new deployment
+```bash
+reboot
+```
+
+
