@@ -91,7 +91,7 @@ journalctl -u piavpn-deploy.service -f
 
 ## 🛡️ Uninstall (Atomic & Custom Image Support)
 
-sirius-os-pia-installer is designed for the lifecycle of Atomic systems (Silverblue, Bazzite, Sirius-OS). If you stop using the package, it removes the installation in it's entirety.
+Sirius-OS PIA Installer is designed for the lifecycle of Atomic systems (Silverblue, Bazzite, Sirius-OS). If you stop using the package, it removes the installation in it's entirety.
 
 - **Layered users:** If you `rpm-ostree remove sirius-os-pia-installer`, the uninstall runs on the next boot and purges installed files.
 - **Custom image / BlueBuild users:** If you remove the package from the `recipe.yml` and rebuild/redeploy, the uninstall runs in the new deployment and purges the PIA installation.
