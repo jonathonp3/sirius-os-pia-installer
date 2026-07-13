@@ -41,36 +41,59 @@ This project is built and hosted via [Fedora COPR](https://copr.fedorainfracloud
 ## 📜 License
 This automation logic is licensed under GPL-3.0. The provisioned software (PIA) is subject to its own proprietary license and terms.
 
-## How to install Sirius-OS PIA Installer
+📦 Installation
 
-1. Install Repository:
+1. On an Existing System (Sirius-OS, Silverblue, Bazzite)
+
+If you are using a standard atomic desktop, add the repository manually and then layer the package:
+bash
+
+Add the Copr Repository
 ```bash
 sudo curl -Lo /etc/yum.repos.d/_copr_jonathonp3-sirius-os.repo https://copr.fedorainfracloud.org/coprs/jonathonp3/sirius-os/repo/fedora-44/jonathonp3-sirius-os-fedora-44.repo
 ```
-
-2. Install Sirius-OS PIA Installer
+Install the Provisioner
 ```bash
 rpm-ostree install sirius-os-pia-installer
 ```
-
-3. Reboot
+Reboot to apply changes
 ```bash
-reboot
+systemctl reboot
 ```
 
-4. Log in to the admin account system (default group is 1000 on Fedora) and wait for the installation to complete. It usually takes a few minutes.
+Via BlueBuild / Custom Image (Bazzite, Aurora, etc.)
 
+If you are building your own image via BlueBuild, add the repository to your recipe.yml or your config directory:
 
-### How to remove PIA
-
-1. 
+Repository URL:
 ```bash
-rpm-ostree install sirius-os-pia-installer
+https://copr.fedorainfracloud.org/coprs/jonathonp3/sirius-os/repo/fedora-44/jonathonp3-sirius-os-fedora-44.repo
+```
+Under the packages section in recipe.yml:
+yaml
+```bash
+  - type: rpm-ostree
+    install:
+      - sirius-os-pia-installer
 ```
 
-2. Reboot into the new deployment
+3. Post-Install Provisioning
+
+After rebooting, log into your primary account (UID 1000). The background pipeline will automatically begin building the isolated VPN environment. 
+
+    Wait for Completion: The process usually takes 2–5 minutes depending on your internet speed, as it needs to fetch the latest PIA binaries and configure the container factory.
+    Monitor Progress (Optional): If you want to see exactly what the installer is doing, you can follow the logs in your terminal:
 ```bash
-reboot
+journalctl -u piavpn-extract.service -f
+journalctl -u piavpn-deploy.service -f
 ```
 
+🛡️ Zero-Touch Cleanup (Atomic & Custom Image Support)
+
+## 🛡️ Zero-Touch Cleanup (Atomic & Custom Image Support)
+
+sirius-os-pia-installer is designed for the lifecycle of Atomic systems (Silverblue, Bazzite, Sirius-OS). If you stop using the package, it removes the installation in it's entirety.
+
+- **Layered users:** If you `rpm-ostree remove sirius-os-pia-installer`, the uninstall runs on the next boot and purges installed files.
+- **Custom image / BlueBuild users:** If you remove the package from the `recipe.yml` and rebuild/redeploy, the uninstall runs in the new deployment and purges the PIA installation.
 
