@@ -88,9 +88,8 @@ journalctl -u piavpn-extract.service -f
 journalctl -u piavpn-deploy.service -f
 ```
 
-🛡️ Zero-Touch Cleanup (Atomic & Custom Image Support)
 
-## 🛡️ Zero-Touch Cleanup (Atomic & Custom Image Support)
+## 🛡️ Uninstall (Atomic & Custom Image Support)
 
 sirius-os-pia-installer is designed for the lifecycle of Atomic systems (Silverblue, Bazzite, Sirius-OS). If you stop using the package, it removes the installation in it's entirety.
 
