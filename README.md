@@ -1,7 +1,7 @@
 # Sirius-OS PIA Installer
 Automated, container-based provisioning pipeline for Private Internet Access (PIA) on Fedora Atomic and Workstation, using a decoupled model for seamless persistent VPN management.
 
-This repository contains RPM source and automation scripts to install the PIA VPN client on **Sirius-OS** and **Wolf-OS**.
+This repository contains RPM source and automation scripts to install the PIA VPN Linux client on **Sirius-OS** and **Wolf-OS**.
 
 On Silverblue, Bazzite, and Aurora (atomic, immutable/read-only filesystems), the installer downloads the PIA Linux app using a decoupled two-stage systemd architecture.
 
@@ -24,17 +24,17 @@ The manager implements a 2 stage model to bridge the gap between user-level cont
    - Restarts the systemd VPN daemon.
    - Checks for updates at boot and skips installation when nothing new is available.
  
+## OSTree behavior
 
-The installer includes cleanup logic designed to work cleanly on OSTree/atomic systems. It bypasses rpm-ostree sandbox limitations by deferring cleanup to the next boot phase via a systemd oneshot workflow. This enables zero-touch deletion: after you remove the RPM and reboot, the uninstall runs automatically without manual steps.
+    - Install/provision writes runtime state under `/var/opt/piavpn` and uses `/var` for persistence across deployments.
+    - Uninstall cleanup is deferred to a boot-time systemd oneshot so it still runs correctly after `rpm-ostree remove` and reboot.
 
 ## 🚀 Key Features
-
-- **Atomic-Native**: Built for OSTree-based systems.
-- **Idempotent**: Quick version checks with no boot-time impact when already up to date.
-- **Credential-Safe**: Updates binaries without altering your login session or settings.
-- **Universal**: Detects and adapts to both Atomic and Workstation environments.
-
-## 📦 Building the RPM
+    
+    - OSTree-Friendly: Designed for persistent deployment state on immutable systems.
+    - Idempotent: Checks for updates and skips work when nothing changed.
+    - Credential-Safe: Preserves credentials/settings while updating binaries.
+    - Universal: Adapts to Atomic and Workstation environments.
 
 This project is built and hosted via [Fedora COPR](https://copr.fedorainfracloud.org/coprs/jonathonp3/sirius-os/). 
 
@@ -58,7 +58,7 @@ rpm-ostree install sirius-os-pia-installer
 reboot
 ```
 
-4. Login to the admin account system (default group is 1000 on fedora) and wait for the installation to complete. It takes a few minutes for the installation to complete. 
+4. Log in to the admin account system (default group is 1000 on Fedora) and wait for the installation to complete. It usually takes a few minutes.
 
 
 ### How to remove PIA
