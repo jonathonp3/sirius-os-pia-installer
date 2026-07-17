@@ -72,6 +72,5 @@ EOF
 mkdir -p /etc/systemd/system/multi-user.target.wants
 ln -sf "$SERVICE_FILE" /etc/systemd/system/multi-user.target.wants/piavpn-uninstall.service
 
-echo "✅ Uninstall task installed; waiting for trigger marker."
-echo "To trigger uninstall, create: $NEEDED_MARKER"
+echo "✅ Uninstall task installed; waiting for piavpn-deploy.sh removal"
 
