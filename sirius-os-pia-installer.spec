@@ -3,7 +3,7 @@
 
 Name:           sirius-os-pia-installer
 Version:        1.2.0
-Release:        11%{?dist}
+Release:        12%{?dist}
 Summary:        Automated PIA VPN provisioner for Sirius-OS
 License:        GPLv3
 URL:            https://github.com/jonathonp3/sirius-os-pia-installer/
@@ -89,7 +89,9 @@ ln -sf ../pia-uninstall-provision.service %{buildroot}/usr/lib/systemd/system/mu
 /usr/lib/sysusers.d/sirius-os-pia.conf
 
 %changelog
-%changelog
+* Sat Jul 18 2026 jonathon <jonathon@sirius-os> - 1.2.0-12
+- Comment clean up pia-uninstall-provision
+
 * Mon Jul 13 2026 jonathon <jonathon@sirius-os> - 1.2.0-11
 - Fix: Trigger uninstall cleanup via systemd ConditionPathExists gate
 - Fix: Ensure uninstall provision artifacts are created at runtime under /etc (deployment-persistent)
