@@ -1,0 +1,18 @@
+[Unit]
+Description=Sirius-OS PIA VPN Uninstall Provisioner
+# This ensures it runs after the filesystem is ready
+After=local-fs.target
+# Only run if the uninstaller hasn't been created yet
+ConditionPathExists=!/etc/systemd/system/piavpn-uninstall.service
+
+[Service]
+Type=oneshot
+User=root
+# Execute the script provided by your RPM
+ExecStart=/usr/libexec/pia-uninstall-provision.sh
+# Ensures systemd considers it "started" successfully
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+ 

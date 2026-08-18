@@ -1,0 +1,16 @@
+[Unit]
+Description=Sirius-OS PIA VPN Provisioning
+After=local-fs.target
+# Only run if the provisioning marker does not exist
+ConditionPathExists=!/etc/wolf-os/pia-provisioned
+
+[Service]
+Type=oneshot
+User=root
+
+ExecStart=/usr/bin/bash /usr/libexec/piavpn-provision.sh
+# Mark the service as active even after the script finishes
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

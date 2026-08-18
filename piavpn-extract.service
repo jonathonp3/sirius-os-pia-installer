@@ -1,0 +1,28 @@
+[Unit]
+Description=Sirius-OS PIA VPN Extraction (User Session)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# Point to your script
+ExecStart=/usr/bin/bash /usr/libexec/piavpn-extract.sh
+
+# --- THE FIXES ---
+# 1. Disable the timeout (Extraction can take 5+ mins on slow internet)
+TimeoutStartSec=0
+
+# 2. Tell systemd NOT to kill the sub-processes (Podman containers)
+# if the main bash script hiccups
+KillMode=process
+
+# 3. Ensure the service doesn't consider itself 'failed' if a container 
+# cleanup warning happens
+SuccessExitStatus=0 15
+# ------------------
+
+RemainAfterExit=yes
+
+[Install]
+WantedBy=default.target
+

@@ -1,0 +1,3 @@
+# Create the VPN groups with locked IDs during RPM installation/layering
+g piahnsd 954 - -
+g piavpn  955 - -
