@@ -1,0 +1,9 @@
+[Unit]
+Description=Watch for PIA staging archive
+
+[Path]
+PathExists=/run/user/1000/cache/pia-vpn/pia-stage.tar.gz
+
+[Install]
+WantedBy=multi-user.target
+

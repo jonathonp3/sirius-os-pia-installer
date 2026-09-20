@@ -1,0 +1,11 @@
+[Unit]
+Description=Sirius-OS PIA Update Check Schedule
+
+[Timer]
+OnBootSec=15min
+OnCalendar=monthly
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+

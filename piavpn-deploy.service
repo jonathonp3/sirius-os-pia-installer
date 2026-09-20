@@ -1,0 +1,17 @@
+[Unit]
+Description=Sirius-OS PIA VPN Deployment (Root)
+# WAIT for the provisioner to finish copying files to /etc
+After=piavpn-provision.service
+After=user@1000.service
+Before=piavpn.service
+Wants=piavpn.service
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/usr/bin/bash /usr/libexec/piavpn-deploy.sh
+ExecStartPost=/usr/bin/systemctl daemon-reload
+
+[Install]
+WantedBy=multi-user.target
+
