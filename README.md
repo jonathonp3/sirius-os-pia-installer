@@ -1,8 +1,8 @@
-Sirius-OS PIA Installer (v2.0.2)
+Sirius-OS PIA Installer (v2.0.0-3)
 
 **Upgrading from an earlier version?**
 
-Version 2.0.2 fixes two issues in the provisioning script that could
+Version 2.0.0-3 fixes two issues in the provisioning script that could
 produce error output in the journal during installation and cleanup.
 The fixes are in the scripts that run at first boot, so users who
 already have an older version installed will not pick them up on a
@@ -81,7 +81,7 @@ This approach solves the limitations of immutable filesystems by providing:
 This project is built and hosted via the Fedora COPR jonathonp3/sirius-os. 
 📜 License
 
-This automation logic is licensed under GPL-3.0. The provisioned software (PIA) is subject to its own proprietary license and terms.
+This automation logic is licensed under GPL-3.0-only. The provisioned software (PIA) is subject to its own proprietary license and terms.
 
 
 📦 Installation
@@ -131,6 +131,7 @@ sudo journalctl -u piavpn-deploy.service -f
 
 Sirius-OS PIA Installer is designed for the lifecycle of Atomic systems. If you stop using the package, it removes the installation in its entirety.
 
-    Layered users: If you rpm-ostree remove sirius-os-pia-installer, the uninstaller runs on the next boot and purges all binaries, configurations, and VPN firewall rules.
+    Layered users: If you rpm-ostree remove sirius-os-pia-installer, the uninstaller runs on the next boot and purges all binaries and configurations.
+    
     Custom image / BlueBuild users: If you remove the package from the recipe.yml and redeploy, the uninstaller triggers in the new deployment to clean the host.
 

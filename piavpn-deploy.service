@@ -5,6 +5,12 @@ After=piavpn-provision.service
 After=user@1000.service
 Before=piavpn.service
 Wants=piavpn.service
+# Skip if the package has been removed. On the boot after
+# rpm-ostree remove, the deploy script is gone but the unit may
+# still be queued by multi-user.target before the dormant
+# uninstaller removes the symlink. The condition makes systemd
+# skip the unit instead of failing to start it.
+ConditionPathExists=/usr/libexec/piavpn-deploy.sh
 
 [Service]
 Type=oneshot

@@ -3,7 +3,7 @@
 
 Name:           sirius-os-pia-installer
 Version:        2.0.0
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Automated PIA VPN provisioner for Sirius-OS (Provisioning Model)
 License:        GPL-3.0-only
 URL:            https://github.com/jonathonp3/sirius-os-pia-installer/
@@ -107,6 +107,19 @@ install -Dpm 0644 %{SOURCE12} %{buildroot}%{_docdir}/%{name}/README.md
 /usr/lib/sysusers.d/sirius-os-pia.conf
 
 %changelog
+* Mon Sep 21 2026 Jonathon P <jonathon@sirius-os> - 2.0.0-3
+- Added ConditionPathExists to piavpn-deploy.service so it is skipped
+  instead of failing on the boot after package removal. Without it,
+  systemd queued the unit before the dormant uninstaller removed the
+  symlink, and the start attempt failed with "not-found".
+- Removed the enablement symlinks during cleanup:
+  /etc/systemd/system/multi-user.target.wants/piavpn-deploy.path,
+  /etc/systemd/system/multi-user.target.wants/piavpn-deploy.service,
+  and the user timer symlink in
+  ~/.config/systemd/user/timers.target.wants/piavpn-extract.timer.
+  Without this, dangling symlinks persisted after removal and
+  appeared in systemctl --failed.
+
 * Sun Sep 20 2026 Jonathon P <jonathon@sirius-os> - 2.0.0-2
 - Atomic handoff for unit files: write to .tmp then mv -f, so systemd
   never sees a partial file during enable.

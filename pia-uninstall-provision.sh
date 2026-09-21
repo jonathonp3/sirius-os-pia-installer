@@ -54,6 +54,11 @@ rm -f /etc/systemd/system/piavpn-deploy.service
 rm -f /etc/systemd/system/piavpn-deploy.path
 rm -f /etc/systemd/system/piavpn-provision.service
 
+# Remove the enablement symlinks
+rm -f /etc/systemd/system/multi-user.target.wants/piavpn-deploy.path
+rm -f /etc/systemd/system/multi-user.target.wants/piavpn-deploy.service
+rm -f /home/"$TARGET_USER"/.config/systemd/user/timers.target.wants/piavpn-extract.timer
+
 # Remove User Units
 rm -f /etc/systemd/user/piavpn-extract.service
 rm -f /etc/systemd/user/piavpn-extract.timer
