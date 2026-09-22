@@ -1,11 +1,11 @@
-Sirius-OS PIA Installer (v2.0.0-3)
+Sirius-OS PIA Installer (v2.0.0-4)
 
 **Upgrading from an earlier version?**
 
-Version 2.0.0-3 fixes two issues in the provisioning script that could
-produce error output in the journal during installation and cleanup.
-The fixes are in the scripts that run at first boot, so users who
-already have an older version installed will not pick them up on a
+Version 2.0.0-4 fixes three issues in the provisioning script that
+could produce error output in the journal during installation and
+cleanup. The fixes are in the scripts that run at first boot, so users
+who already have an older version installed will not pick them up on a
 package upgrade alone.
 
 To pick up both fixes:
@@ -34,6 +34,26 @@ sudo systemctl reboot
 After this cycle, the system has the fixed scripts. Future upgrades
 within the 2.0.x series do not require this remove-and-reinstall step
 unless the scripts themselves change again.
+
+**If you have `sirius-os-virtualization` installed**
+
+The `nft flush ruleset` line that was removed in 2.0.0-4 had a side
+effect beyond PIA. It cleared firewalld's rules as well, including the
+binding of `virbr0` to the `libvirt` zone.
+
+If you installed `sirius-os-virtualization` and used virt-manager, and
+you also removed PIA at some point, your VMs would have lost DHCP and
+internet access. The bridge itself is fine — `virbr0` exists and
+`virtnetworkd` is running. What's missing is the firewalld zone
+binding.
+
+Restore it with:
+
+```bash
+sudo firewall-cmd --zone=libvirt --add-interface=virbr0
+sudo firewall-cmd --zone=libvirt --add-interface=virbr0 --permanent
+```
+
 
 ---
 🏗️ The Architecture

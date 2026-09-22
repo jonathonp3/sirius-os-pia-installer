@@ -33,11 +33,6 @@ pkill -9 pia-daemon || :
 pkill -9 pia-client || :
 pkill -9 pia-unbound || :
 
-# 3. Manual Firewall Flush
-echo "🔥 Clearing VPN Kill-Switch rules..."
-nft flush ruleset || :
-systemctl restart firewalld || :
-
 umount -l /opt/piavpn/etc/cgroup/net_cls 2>/dev/null || :
 
 echo "🗑️  Removing persistent files and binaries..."

@@ -3,7 +3,7 @@
 
 Name:           sirius-os-pia-installer
 Version:        2.0.0
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        Automated PIA VPN provisioner for Sirius-OS (Provisioning Model)
 License:        GPL-3.0-only
 URL:            https://github.com/jonathonp3/sirius-os-pia-installer/
@@ -107,6 +107,17 @@ install -Dpm 0644 %{SOURCE12} %{buildroot}%{_docdir}/%{name}/README.md
 /usr/lib/sysusers.d/sirius-os-pia.conf
 
 %changelog
+* Tue Sep 22 2026  Jonathon P <jonathon@sirius-os> - 2.0.0-4
+- Removed `nft flush ruleset` and the associated `firewall-cmd --reload`
+  from the dormant uninstaller. Testing showed that PIA's kill-switch
+  rules are in-memory only and are cleared by the daemon when it shuts
+  down. The cleanup task already stops the daemon with
+  `systemctl disable --now piavpn.service`, so the rules are gone
+  before any nft command would run. The flush was clearing an empty
+  ruleset while wiping firewalld's and libvirt's rules as a side
+  effect, which broke the virbr0 bridge binding and left VMs without
+  DHCP.
+
 * Mon Sep 21 2026 Jonathon P <jonathon@sirius-os> - 2.0.0-3
 - Added ConditionPathExists to piavpn-deploy.service so it is skipped
   instead of failing on the boot after package removal. Without it,
