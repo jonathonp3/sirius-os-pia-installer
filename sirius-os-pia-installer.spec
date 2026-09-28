@@ -3,7 +3,7 @@
 
 Name:           sirius-os-pia-installer
 Version:        2.0.0
-Release:        4%{?dist}
+Release:        5%{?dist}
 Summary:        Automated PIA VPN provisioner for Sirius-OS (Provisioning Model)
 License:        GPL-3.0-only
 URL:            https://github.com/jonathonp3/sirius-os-pia-installer/
@@ -106,7 +106,55 @@ install -Dpm 0644 %{SOURCE12} %{buildroot}%{_docdir}/%{name}/README.md
 
 /usr/lib/sysusers.d/sirius-os-pia.conf
 
-%changelog
+* Mon Sep 28 2026  Jonathon P <jonathon@sirius-os> - 2.0.0-5
+- Fixed extraction failing on BlueBuild/Bazzite first boot. Two
+  problems stacked:
+  1. piavpn-extract.service's After=network-online.target was not
+     a reliable guarantee that the network was usable on an initial
+     rebase to Bazzite. NetworkManager reported the network "up"
+     before DHCP had completed and DNS was resolving. curl to the
+     PIA download URL failed, and set -e killed the extraction.
+  2. Bazzite's first-boot sequence tears down or restarts the UID
+     1000 user manager after multi-user.target completes. The
+     root provisioner's --no-block start of piavpn-extract.service
+     returned success while the job died silently, and the
+     ConditionPathExists gate meant it never re-armed on the
+     following boot.
+- The user timer now owns the first run and fires at 1 minute 30
+  seconds after boot. That is past Bazzite's measured ~52s
+  first-boot teardown, with margin, and long enough for
+  NetworkManager, DHCP, and DNS to be genuinely ready. The delay
+  is only paid on first install; post-stamp boots exit before the
+  network.
+- piavpn-provision.sh: removed the /usr/libexec/piavpn-deploy.sh
+  kickstart from the tail. The user timer and the path unit now
+  own the trigger chain.
+- piavpn-extract.sh: added a flock guard on
+  /run/user/$UID/cache/pia-vpn/.extract.lock so the timer and a
+  manual systemctl --user start cannot race.
+- piavpn-extract.sh: added a check stamp at
+  ~/.local/state/sirius-os/pia/.last-check with a 7-day interval.
+  A successful check writes the stamp; subsequent boots within 7
+  days exit immediately without a network round trip. The stamp is
+  only written on success, so a machine that was offline during
+  its first-install window retries on the next boot with no user
+  intervention.
+- piavpn-extract.sh: curl now uses -sfL --max-time 30, and both
+  pipelines end in '|| true', so an offline boot reaches the
+  offline branch instead of dying on pipefail. When offline and
+  PIA is already installed, the script exits 0 without writing
+  the stamp. When offline and PIA is not installed, it exits 1
+  (the genuine first-install failure case).
+- pia-uninstall-provision.sh: remove ~/.local/state/sirius-os/pia/
+  on uninstall so a reinstall starts with a clean check window.
+  Without this, a stale stamp survives the uninstall and the next
+  install's extract script skips its first check, leaving PIA
+  uninstalled until the stamp expires.
+- Documentation: added docs/TESTING.md, docs/PIA VPN Functional
+  Testing Guide.md, and docs/Full Lifecycle Timeline.md.
+  Restructured README.md around operational use (monitoring,
+  health checks, failure playbook, timing reference).
+
 * Tue Sep 22 2026  Jonathon P <jonathon@sirius-os> - 2.0.0-4
 - Removed `nft flush ruleset` and the associated `firewall-cmd --reload`
   from the dormant uninstaller. Testing showed that PIA's kill-switch

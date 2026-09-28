@@ -62,6 +62,13 @@ rm -f /etc/systemd/user/piavpn-extract.timer
 rm -f /etc/sirius-os/pia-provisioned
 rmdir /etc/sirius-os 2>/dev/null || :
 
+# Remove the user-level check stamp so a reinstall starts with a
+# clean check window. Without this, a stale stamp survives the
+# uninstall and the next install's extract script skips its first
+# check, leaving PIA uninstalled until the stamp expires.
+rm -rf "/home/$TARGET_USER/.local/state/sirius-os/pia"
+rmdir "/home/$TARGET_USER/.local/state/sirius-os" 2>/dev/null || :
+
 echo "📂 Removing uninstaller infrastructure..."
 rm -f /etc/systemd/system/multi-user.target.wants/piavpn-uninstall.service
 rm -f /etc/systemd/system/piavpn-uninstall.service

@@ -2,10 +2,10 @@
 Description=Sirius-OS PIA Update Check Schedule
 
 [Timer]
-OnBootSec=15min
+OnBootSec=1min 30sec
 OnCalendar=monthly
 Persistent=true
+Unit=piavpn-extract.service
 
 [Install]
 WantedBy=timers.target
-

@@ -58,7 +58,4 @@ mkdir -p /etc/sirius-os
 touch /etc/sirius-os/pia-provisioned
 echo "✅ Sirius-OS: PIA VPN provisioning complete!"
 
-# --- STEP 6: KICKSTART ---
-# This manual call is now safe because all units are already on disk
-/usr/libexec/piavpn-deploy.sh
 
