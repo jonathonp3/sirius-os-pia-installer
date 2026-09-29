@@ -1,217 +1,8 @@
-Sirius-OS PIA Installer (v2.0.0-5)
-
-**Upgrading from an earlier version?**
-
-Version 2.0.0-5 changes the first-boot scripts to fix extraction on
-BlueBuild/Bazzite images. Because the changes are in the provisioning
-scripts, users on 2.0.0-4 or earlier must do a remove-reboot-reinstall
-cycle to pick them up:
-
-1. Remove the package:
-
-```bash
-sudo rpm-ostree remove sirius-os-pia-installer
-sudo systemctl reboot
-```
-
-2. On the next boot, the dormant uninstaller runs and cleans up the
-   system. Wait for it to complete, then verify:
-
-```bash
-ls -la /etc/systemd/system/piavpn-uninstall.service 2>&1
-# should report "No such file or directory"
-```
-3. Reinstall the package:
-
-```bash
-sudo rpm-ostree install sirius-os-pia-installer
-sudo systemctl reboot
-```
-
-Future upgrades within the 2.0.x series do not require this step unless
-the scripts change again.
-
-**What changed in 2.0.0-5:**
-
-Fixed extraction failing on BlueBuild/Bazzite first boot. Two problems
-stacked to cause the failure:
-
-1. `piavpn-extract.service` relied on `After=network-online.target`,
-   but that target fires before DHCP has completed and DNS is
-   resolving on first boot. The `curl` to the PIA download URL
-   failed, and `set -euo pipefail` killed the extraction.
-
-2. Bazzite's first-boot sequence tears down or restarts the UID 1000
-   user manager after `multi-user.target` completes. Even with a
-   usable network, the `--no-block` start from `piavpn-provision.sh`
-   would have been killed mid-flight, and the
-   `ConditionPathExists=!/etc/sirius-os/pia-provisioned` gate meant
-   it never re-armed on the following boot.
-
-The fix:
-
-- The user timer (`piavpn-extract.timer`) now owns the first run,
-  firing **2 minutes after boot** instead of being started
-  immediately by the provisioner. 2 minutes is long enough for
-  NetworkManager, DHCP, and DNS to be genuinely ready, and late
-  enough that the first-boot session teardown has already happened.
-- Added a `flock` guard so the timer and a manual
-  `systemctl --user start` cannot race.
-- Removed the `/usr/libexec/piavpn-deploy.sh` kickstart from the
-  tail of `piavpn-provision.sh`. The `piavpn-deploy.path` unit still
-  fires the root deployment the instant the staging tar lands, so
-  the zero-sudo relay is unchanged.
-
-**Note:** First install now takes longer than before. See the
-*Post-Install Provisioning* section below for timing details.
-
-
-**If you have `sirius-os-virtualization` installed**
-
-The `nft flush ruleset` line that was removed in 2.0.0-4 had a side
-effect beyond PIA. It cleared firewalld's rules as well, including the
-binding of `virbr0` to the `libvirt` zone.
-
-If you installed `sirius-os-virtualization` and used virt-manager, and
-you also removed PIA at some point, your VMs would have lost DHCP and
-internet access. The bridge itself is fine — `virbr0` exists and
-`virtnetworkd` is running. What's missing is the firewalld zone
-binding.
-
-Restore it with:
-
-```bash
-sudo firewall-cmd --zone=libvirt --add-interface=virbr0
-sudo firewall-cmd --zone=libvirt --add-interface=virbr0 --permanent
-```
-
-
----
-🏗️ The Architecture
-
-The Sirius-OS PIA Installer implements an innovative "Relay" model designed specifically for the unique constraints of Fedora Atomic desktops (Silverblue, Bazzite). Because traditional RPM %post scripts are restricted in these environments, this project uses a decoupled, multi-stage pipeline to manage the application lifecycle precisely.
-
-    [!IMPORTANT]
-    Project Transparency & Compliance
-    This repository contains provisioning and automation scripts only. It does not include any Private Internet Access (PIA) source code or proprietary binaries. The PIA Linux application is fetched directly from the official PIA website during the extraction phase and is then prepared to run natively on Atomic environments.
-
-Stage 1: The Extraction (User-Level)
-
-    Unit: piavpn-extract.service (Triggered by piavpn-extract.timer)
-    Context: Runs in the user session (UID 1000).
-    Action: Scrapes the official PIA web portal for the latest release and builds the binaries inside a temporary, isolated Distrobox factory.
-    Output: Writes a staging archive to a private, RAM-based cache: /run/user/1000/cache/pia-vpn/.
-    Efficiency: Includes a Fast-Exit idempotency check to skip the container build if the local version is already up-to-date.
-
-Stage 2: The Deployment (Root-Level)
-
-    Unit: piavpn-deploy.service (Triggered by piavpn-deploy.path)
-    Context: Runs with System/Root privileges.
-    Action: Monitors the staging cache. As soon as Stage 1 delivers a new archive, Root wakes up to:
-        Deploy binaries to persistent storage (/var/opt/piavpn).
-        Patch and integrate systemd units and UI assets.
-        Preserve credentials and configurations across OS upgrades and rebases.
-
-🛡️ Key Innovations & Design Goals
-Secure Zero-Sudo Handoff
-
-To maintain a high security posture, Stage 2 is activated via a Systemd Path Unit. This enables a controlled, event-driven link between User-level extraction and Root-level deployment. This architecture ensures the extraction logic never requires broad sudo privileges.
-The Blueprint Provisioning Model
-
-Unlike standard packages that "hide" units inside the read-only vendor layer (/usr/lib), Sirius-OS uses a transparent provisioning workflow:
-
-    Blueprints: Service templates are stored in /usr/share/sirius-os.
-    Deployment: Units are deployed at runtime into /etc/systemd/.
-
-This approach solves the limitations of immutable filesystems by providing:
-
-    Auditability: You can see exactly what is running in your system directories.
-    Sovereignty: You can permanently modify, enable, or disable timers and services without being blocked by a read-only filesystem.
-    Self-Healing: The system can automatically re-provision the environment if binaries are detected as missing on boot.
-
-This project is built and hosted via the Fedora COPR jonathonp3/sirius-os. 
-📜 License
-
-This automation logic is licensed under GPL-3.0-only. The provisioned software (PIA) is subject to its own proprietary license and terms.
-
-
-📦 Installation
-1. On an Existing System (Silverblue, Bazzite, Sirius-OS)
-
-Add the repository manually and then layer the package:
-
-Add the Copr Repository
-```bash
-sudo curl -Lo /etc/yum.repos.d/_copr_jonathonp3-sirius-os.repo https://copr.fedorainfracloud.org/coprs/jonathonp3/sirius-os/repo/fedora-44/jonathonp3-sirius-os-fedora-44.repo
-```
-Install the Provisioner
-```bash
-rpm-ostree install sirius-os-pia-installer
-systemctl reboot
-```
-
-2. Via BlueBuild / Custom Image
-
-If you are building your own image via BlueBuild, add the repository URL to your recipe.yml and include the package:
-yaml
-```bash
-# Inside recipe.yml
-- type: rpm-ostree
-  install:
-    - sirius-os-pia-installer
-```
-
-🚀 Post-Install Provisioning
-
-After rebooting, log into your primary account (UID 1000). The
-background pipeline builds the isolated VPN environment automatically.
-**You do not need to run anything by hand.**
-
-**Expected timing (first install only):**
-
-- **0:00** — you log in
-- **~1:30** — the extraction timer fires and the Distrobox build starts
-- **~1:30–4:30** — container build, PIA download, binary extraction
-- **~4:30** — the VPN app appears and the daemon starts
-
-Total: **about 4–5 minutes from login to a working VPN.**
-
-1:30 is chosen to clear Bazzite's first-boot session teardown
-(~52s) with margin. On Silverblue there is no equivalent teardown,
-but the delay is harmless: it is only paid on first install, and on
-every subsequent boot the extraction exits immediately via the
-version check. If the network is not yet up when the timer fires
-(captive portal, slow DHCP), the script exits cleanly without
-recording a check, and the next boot retries.
-
----
-
-**BlueBuild/Bazzite users:** your machine may reboot once during
-first deployment as part of Bazzite's own first-boot sequence. After
-the reboot, log in and wait as above.
-
----
-
-**Monitor progress (optional):**
-
-```bash
-# Stage 1 — user-level extraction (UID 1000):
-journalctl --user -u piavpn-extract.service -f
-
-# Stage 2 — root-level deployment:
-sudo journalctl -u piavpn-deploy.service -f
-
-# Status of both, without following:
-systemctl --user status piavpn-extract.service
-systemctl status piavpn-deploy.service
-```
-
-Stage 1 ends with `🚀 SUCCESS: Archive ready for deployment.`
-Stage 2 ends with `✨ Update applied successfully.`# Sirius-OS PIA Installer
+# Sirius-OS PIA Installer (v2.0.0-5)
 
 **Automated PIA VPN provisioner for Fedora Atomic desktops (Silverblue, Bazzite, Sirius-OS).**
 
-Version: 2.0.0-6 · License: GPL-3.0-only · [COPR: jonathonp3/sirius-os](https://copr.fedorainfracloud.org/coprs/jonathonp3/sirius-os/)
+Version: 2.0.0-5 · License: GPL-3.0-only · [COPR: jonathonp3/sirius-os](https://copr.fedorainfracloud.org/coprs/jonathonp3/sirius-os/)
 
 ---
 
@@ -234,7 +25,7 @@ container, and a root-level deployer that installs them into `/var` and
 
 ## Table of Contents
 
-- [What this is](#what-this-is)
+- [What's new in 2.0.0-5](#whats-new-in-200-5)
 - [Install](#install)
 - [Post-install provisioning](#post-install-provisioning)
 - [Monitoring](#monitoring)
@@ -247,6 +38,80 @@ container, and a root-level deployer that installs them into `/var` and
 - [Key design goals](#key-design-goals)
 - [Where to go for more](#where-to-go-for-more)
 - [License](#license)
+
+---
+
+## What's new in 2.0.0-5
+
+**Upgrading from an earlier version?**
+
+Version 2.0.0-5 changes the first-boot scripts to fix extraction on
+BlueBuild/Bazzite images. Because the changes are in the provisioning
+scripts, users on 2.0.0-4 or earlier must do a remove-reboot-reinstall
+cycle to pick them up:
+
+```bash
+sudo rpm-ostree remove sirius-os-pia-installer
+sudo systemctl reboot
+# wait for the dormant uninstaller to complete, verify:
+ls -la /etc/systemd/system/piavpn-uninstall.service 2>&1
+# should report "No such file or directory"
+sudo rpm-ostree install sirius-os-pia-installer
+sudo systemctl reboot
+```
+
+Future upgrades within the 2.0.x series do not require this step
+unless the scripts change again.
+
+**What changed:** extraction was failing on BlueBuild/Bazzite first
+boot. Two problems stacked:
+
+1. `piavpn-extract.service` relied on `After=network-online.target`,
+   but that target fires before DHCP has completed and DNS is
+   resolving on first boot. The `curl` to the PIA download URL
+   failed, and `set -euo pipefail` killed the extraction.
+2. Bazzite's first-boot sequence tears down or restarts the UID 1000
+   user manager after `multi-user.target` completes. Even with a
+   usable network, the `--no-block` start from `piavpn-provision.sh`
+   would have been killed mid-flight, and the
+   `ConditionPathExists=!/etc/sirius-os/pia-provisioned` gate meant
+   it never re-armed on the following boot.
+
+The fix:
+
+- The user timer (`piavpn-extract.timer`) now owns the first run,
+  firing **1 minute and 30 seconds after boot** instead of being
+  started immediately by the provisioner. That is long enough for
+  NetworkManager, DHCP, and DNS to be genuinely ready, and late
+  enough that the first-boot session teardown (~52s) has already
+  happened.
+- Added a `flock` guard so the timer and a manual
+  `systemctl --user start` cannot race.
+- Removed the `/usr/libexec/piavpn-deploy.sh` kickstart from the
+  tail of `piavpn-provision.sh`. The `piavpn-deploy.path` unit still
+  fires the root deployment the instant the staging tar lands, so
+  the zero-sudo relay is unchanged.
+
+**Note:** First install now takes longer than before. See
+[Post-install provisioning](#post-install-provisioning) for timing
+details.
+
+**If you have `sirius-os-virtualization` installed**
+
+The `nft flush ruleset` line that was removed in 2.0.0-4 had a side
+effect beyond PIA. It cleared firewalld's rules as well, including the
+binding of `virbr0` to the `libvirt` zone. If you installed
+`sirius-os-virtualization` and used virt-manager, and you also removed
+PIA at some point, your VMs would have lost DHCP and internet access.
+The bridge itself is fine — `virbr0` exists and `virtnetworkd` is
+running. What's missing is the firewalld zone binding.
+
+Restore it with:
+
+```bash
+sudo firewall-cmd --zone=libvirt --add-interface=virbr0
+sudo firewall-cmd --zone=libvirt --add-interface=virbr0 --permanent
+```
 
 ---
 
@@ -273,25 +138,6 @@ Add the repository URL to your `recipe.yml` and include the package:
   install:
     - sirius-os-pia-installer
 ```
-
-### 3. Upgrading from an earlier version
-
-If you are on 2.0.0-4 or earlier, remove-reboot-reinstall is required
-because the provisioning scripts changed. See the changelog in the
-spec file for what changed and why.
-
-```bash
-sudo rpm-ostree remove sirius-os-pia-installer
-sudo systemctl reboot
-# wait for the dormant uninstaller to complete, verify:
-ls -la /etc/systemd/system/piavpn-uninstall.service 2>&1
-# should report "No such file or directory"
-sudo rpm-ostree install sirius-os-pia-installer
-sudo systemctl reboot
-```
-
-Future upgrades within the 2.0.x series do not require this step
-unless the scripts change again.
 
 ---
 
@@ -363,6 +209,12 @@ sudo journalctl -u piavpn-deploy.service -f
 | 1 — extract | `🚀 SUCCESS: Archive ready for deployment.` |
 | 2 — deploy | `✨ Update applied successfully.` |
 | daemon | `systemctl status piavpn.service` shows `active (running)` |
+
+If Stage 1 exits without `SUCCESS`, read its last 20 lines —
+`journalctl --user -u piavpn-extract.service -n 20 --no-pager` — and
+check whether the network was up when the timer fired. A network
+failure on first install exits 0 without writing the check stamp, so
+the next boot retries automatically.
 
 ---
 
@@ -660,7 +512,7 @@ immutable-filesystem limitation by providing:
 |---|---|
 | `docs/TESTING.md` | Validating a new release. Covers every path: first install, skip-on-stamp, offline, simulated update, Bazzite cross-reboot, uninstall. |
 | `docs/PIA VPN Functional Testing Guide.md` | Validating that the VPN itself works (daemon health, connection, traffic routing, DNS leak, IPv6 leak, kill switch, credential persistence, firewall coexistence). |
-| `docs/Sirius-OS PIA Installer 2.0.0-6: Full Lifecycle Timeline.md` | Understanding the order-of-operations. Diagrams every phase from package layering through uninstall. |
+| `docs/Full Lifecycle Timeline.md` | Understanding the order-of-operations. Diagrams every phase from package layering through uninstall. |
 
 ---
 
@@ -668,33 +520,3 @@ immutable-filesystem limitation by providing:
 
 This automation logic is licensed under GPL-3.0-only. The provisioned
 software (PIA) is subject to its own proprietary license and terms.
-
-| Command | Unit | User | What it shows |
-| --- | --- | --- | --- |
-| `journalctl --user -u piavpn-extract.service -f` | `piavpn-extract` | UID `1000` | Network check, Distrobox build, and tar handoff |
-| `systemctl --user status piavpn-extract.service` | `piavpn-extract` | UID `1000` | Current state, recent log lines, and exit code |
-| `journalctl --user -u piavpn-extract.service --no-pager` | `piavpn-extract` | UID `1000` | Full service history for this boot |
-| `systemctl status piavpn-deploy.service` | `piavpn-deploy` | `root` | Whether the path unit fired and what the deployment did |
-
-
-**What "done" looks like:**
-
-- Stage 1 ends with `🚀 SUCCESS: Archive ready for deployment.`
-- Stage 2 ends with `✨ Update applied successfully.`
-- `systemctl status piavpn.service` shows `active (running)`
-
-If Stage 1 exits without `SUCCESS`, read its last 20 lines —
-`journalctl --user -u piavpn-extract.service -n 20 --no-pager` — and
-check whether the network was up when the timer fired. A network
-failure on first install exits 0 without writing the check stamp, so
-the next boot retries automatically. You do not need to do anything.
-
-
-🛡️ Uninstall (Atomic & Custom Image Support)
-
-Sirius-OS PIA Installer is designed for the lifecycle of Atomic systems. If you stop using the package, it removes the installation in its entirety.
-
-    Layered users: If you rpm-ostree remove sirius-os-pia-installer, the uninstaller runs on the next boot and purges all binaries and configurations.
-    
-    Custom image / BlueBuild users: If you remove the package from the recipe.yml and redeploy, the uninstaller triggers in the new deployment to clean the host.
-

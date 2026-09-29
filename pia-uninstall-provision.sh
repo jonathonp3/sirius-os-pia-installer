@@ -48,6 +48,11 @@ echo "📂 Cleaning /etc from Provisioned Units..."
 rm -f /etc/systemd/system/piavpn-deploy.service
 rm -f /etc/systemd/system/piavpn-deploy.path
 rm -f /etc/systemd/system/piavpn-provision.service
+# Remove the upstream PIA service file. This is extracted from the
+# vendor tarball by piavpn-deploy.sh, not created by our provisioner,
+# but it becomes an orphan once /var/opt/piavpn is gone.
+rm -f /etc/systemd/system/piavpn.service
+rm -f /etc/systemd/system/multi-user.target.wants/piavpn.service
 
 # Remove the enablement symlinks
 rm -f /etc/systemd/system/multi-user.target.wants/piavpn-deploy.path

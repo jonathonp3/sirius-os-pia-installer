@@ -106,6 +106,7 @@ install -Dpm 0644 %{SOURCE12} %{buildroot}%{_docdir}/%{name}/README.md
 
 /usr/lib/sysusers.d/sirius-os-pia.conf
 
+%changelog
 * Mon Sep 28 2026  Jonathon P <jonathon@sirius-os> - 2.0.0-5
 - Fixed extraction failing on BlueBuild/Bazzite first boot. Two
   problems stacked:
@@ -154,6 +155,17 @@ install -Dpm 0644 %{SOURCE12} %{buildroot}%{_docdir}/%{name}/README.md
   Testing Guide.md, and docs/Full Lifecycle Timeline.md.
   Restructured README.md around operational use (monitoring,
   health checks, failure playbook, timing reference).
+- pia-uninstall-provision.sh: remove ~/.local/state/sirius-os/pia/
+  on uninstall so a reinstall starts with a clean check window.
+  Without this, a stale stamp survives the uninstall and the next
+  install's extract script skips its first check, leaving PIA
+  uninstalled until the stamp expires.
+- pia-uninstall-provision.sh: remove /etc/systemd/system/piavpn.service
+  and its enablement symlink on uninstall. This file is extracted
+  from the PIA vendor tarball by piavpn-deploy.sh, not created by our
+  provisioner, but it becomes an orphan once /var/opt/piavpn is
+  removed. Without this, the service file persists after removal and
+  is only overwritten on a subsequent install.  
 
 * Tue Sep 22 2026  Jonathon P <jonathon@sirius-os> - 2.0.0-4
 - Removed `nft flush ruleset` and the associated `firewall-cmd --reload`
