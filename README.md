@@ -123,7 +123,7 @@ Add the COPR repository, then layer the package:
 
 ```bash
 sudo curl -Lo /etc/yum.repos.d/_copr_jonathonp3-sirius-os.repo \
-  https://copr.fedorainfracloud.org/coprs/jonathonp3/sirius-os/repo/fedora-44/jonathonp3-sirius-os-fedora-44.repo
+  "https://copr.fedorainfracloud.org/coprs/jonathonp3/sirius-os/repo/fedora-$(rpm -E %fedora)/jonathonp3-sirius-os-fedora-$(rpm -E %fedora).repo"
 
 rpm-ostree install sirius-os-pia-installer
 systemctl reboot
