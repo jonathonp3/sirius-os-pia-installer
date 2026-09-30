@@ -126,8 +126,6 @@ sudo curl -Lo /etc/yum.repos.d/_copr_jonathonp3-sirius-os.repo \
   https://copr.fedorainfracloud.org/coprs/jonathonp3/sirius-os/repo/fedora-$(rpm -E %fedora)/jonathonp3-sirius-os-fedora-$(rpm -E %fedora).repo
 ```
 
-Install:
-
 ```bash
 rpm-ostree install sirius-os-pia-installer
 systemctl reboot
